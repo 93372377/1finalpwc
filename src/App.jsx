@@ -6,14 +6,13 @@ import msdLogo from './assets/msd_logo.webp';
 const App = () => {
   const { instance, accounts } = useMsal();
   const [view, setView] = useState('signin');
-  const [section, setSection] = useState('');
   const [entity, setEntity] = useState('');
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
   const [invoiceData, setInvoiceData] = useState([]);
 
-  const entityOptions = [1207, 3188, 1012, 1194, 380, 519]; // shortened for brevity
-  const months = ['January', 'February', 'March', "April", "May", "June"];
+  const entityOptions = [1207, 3188, 1012, 1194, 380, 519];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June'];
   const years = ['2025', '2026'];
 
   useEffect(() => {
@@ -42,7 +41,6 @@ const App = () => {
     });
 
     if (!response.ok) alert(`❌ Upload failed: ${response.statusText}`);
-    else alert('✅ File uploaded successfully.');
   };
 
   const getDownloadLink = async (fileName) => {
@@ -81,41 +79,51 @@ const App = () => {
     setInvoiceData([...invoiceData, { invoice: '', cash_app: '', credit_note: '', fbl5n: '', cmm: '', comments: '' }]);
   };
 
+  const handlePaste = (e) => {
+    const pasteData = e.clipboardData.getData('text');
+    const rows = pasteData.split('\n').map(row => row.split('\t'));
+    const updatedData = [...invoiceData];
+
+    rows.forEach((cells, rowIndex) => {
+      if (!updatedData[rowIndex]) updatedData[rowIndex] = { invoice: '', cash_app: '', credit_note: '', fbl5n: '', cmm: '', comments: '' };
+      Object.keys(updatedData[rowIndex]).forEach((key, cellIndex) => {
+        if (cells[cellIndex] !== undefined) updatedData[rowIndex][key] = cells[cellIndex];
+      });
+    });
+
+    setInvoiceData(updatedData);
+    e.preventDefault();
+  };
+
   const FileInputCell = ({ value, onTextChange, onFileUpload, fileName }) => {
     const fileRef = useRef();
     return (
-      <div>
+      <div style={{ position: 'relative' }}>
         <input
           type="text"
           value={value || ''}
           onChange={onTextChange}
-          onClick={() => fileRef.current?.click()}
+          onClick={() => fileRef.current.click()}
           style={{ width: '100%', padding: '4px', textAlign: 'center' }}
         />
         <input type="file" ref={fileRef} onChange={onFileUpload} style={{ display: 'none' }} />
         {fileName && (
-          <button
+          <span
             onClick={(e) => {
               e.stopPropagation();
               downloadFile(fileName);
             }}
-            style={{ marginTop: 5 }}
+            style={{ cursor: 'pointer', marginLeft: 5, fontSize: 16 }}
+            title="Download"
           >
-            📥 Download
-          </button>
+            📥
+          </span>
         )}
       </div>
     );
   };
 
-  const headers = [
-    { key: 'invoice', label: 'Invoice' },
-    { key: 'cash_app', label: 'Cash App' },
-    { key: 'credit_note', label: 'Credit Note' },
-    { key: 'fbl5n', label: 'FBL5N' },
-    { key: 'cmm', label: 'CMM' },
-    { key: 'comments', label: 'Comments' }
-  ];
+  const headers = ['Invoice', 'Cash App', 'Credit Note', 'FBL5N', 'CMM', 'Comments'];
 
   return (
     <div style={{ backgroundColor: '#EAF6FC', minHeight: '100vh', padding: '2rem', fontFamily: 'Segoe UI' }}>
@@ -133,9 +141,8 @@ const App = () => {
 
       {view === 'home' && (
         <div style={{ textAlign: 'center', marginTop: 50 }}>
-          <h2>Select a section to continue:</h2>
           {['cash_app', 'po_pod', 'follow_up'].map(s => (
-            <button key={s} onClick={() => { setSection(s); setView('dashboard'); }} style={{ margin: 5 }}>
+            <button key={s} onClick={() => setView('dashboard')} style={{ margin: 5 }}>
               {s.replace('_', ' ').toUpperCase()}
             </button>
           ))}
@@ -160,32 +167,29 @@ const App = () => {
           </select>
           <br />
           <button onClick={() => setView('upload')} style={{ margin: 10 }}>Submit</button>
-          <button onClick={() => setView('home')} style={{ margin: 10 }}>← Go Back</button>
         </div>
       )}
 
       {view === 'upload' && (
-        <div style={{ marginTop: 50 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ marginTop: 50, overflowX: 'auto' }}>
+          <table style={{ width: '100%' }}>
             <thead>
-              <tr style={{ background: '#007680', color: 'white' }}>
-                {headers.map(h => <th key={h.key}>{h.label}</th>)}
-              </tr>
+              <tr>{headers.map(h => <th key={h}>{h}</th>)}</tr>
             </thead>
-            <tbody>
+            <tbody onPaste={handlePaste}>
               {invoiceData.map((row, idx) => (
                 <tr key={idx}>
-                  {headers.map(h => (
-                    <td key={h.key}>
+                  {headers.map((h, i) => (
+                    <td key={i}>
                       <FileInputCell
-                        value={row[h.key]}
+                        value={row[h.toLowerCase().replace(' ', '_')]}
                         onTextChange={(e) => {
                           const updated = [...invoiceData];
-                          updated[idx][h.key] = e.target.value;
+                          updated[idx][h.toLowerCase().replace(' ', '_')] = e.target.value;
                           setInvoiceData(updated);
                         }}
-                        onFileUpload={(e) => handleFileUpload(e, idx, h.key)}
-                        fileName={row[`${h.key}_file`]}
+                        onFileUpload={(e) => handleFileUpload(e, idx, h.toLowerCase().replace(' ', '_'))}
+                        fileName={row[`${h.toLowerCase().replace(' ', '_')}_file`]}
                       />
                     </td>
                   ))}
@@ -194,7 +198,6 @@ const App = () => {
             </tbody>
           </table>
           <button onClick={addRow}>➕ Add Row</button>
-          <button onClick={() => setView('dashboard')}>← Go Back</button>
         </div>
       )}
     </div>
