@@ -4,7 +4,7 @@ export const msalConfig = {
   auth: {
     clientId: '4d661288-c66e-45a8-a8a3-b76b795be7f9', // App (client) ID
     authority: 'https://login.microsoftonline.com/a00de4ec-48a8-43a6-be74-e31274e2060d', // Tenant ID
-    redirectUri: 'https://finalfinalpwc34.netlify.app'
+    redirectUri: 'https://finalfinalpwc35.netlify.app'
   },
   cache: {
     cacheLocation: 'localStorage',
