@@ -9,7 +9,6 @@ const App = () => {
   const [entity, setEntity] = useState('');
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
-  const [filters, setFilters] = useState({});
   const [invoiceData, setInvoiceData] = useState([]);
   const [poPodData, setPoPodData] = useState([]);
   const [followUpData, setFollowUpData] = useState([]);
@@ -139,7 +138,37 @@ const App = () => {
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'Segoe UI' }}>
-      {/* Your full existing UI rendering logic here */}
+      <h1>PWC Testing Automation</h1>
+      {view === 'signin' && <button onClick={signIn}>Sign in with Microsoft</button>}
+      {view === 'home' && (
+        <div>
+          <p>Welcome, {accounts[0]?.username}</p>
+          {Object.keys(headersMap).map(key => (
+            <button key={key} onClick={() => { setSection(key); setView('dashboard'); }}>
+              {key.replace('_', ' ').toUpperCase()}
+            </button>
+          ))}
+          <button onClick={logout}>Logout</button>
+        </div>
+      )}
+      {view === 'dashboard' && (
+        <form onSubmit={(e) => { e.preventDefault(); if (entity && month && year) setView('upload'); }}>
+          <select value={entity} onChange={(e) => setEntity(e.target.value)}>
+            <option>-- Entity --</option>
+            {entityOptions.map(v => <option key={v}>{v}</option>)}
+          </select>
+          <select value={month} onChange={(e) => setMonth(e.target.value)}>
+            <option>-- Month --</option>
+            {months.map(m => <option key={m}>{m}</option>)}
+          </select>
+          <select value={year} onChange={(e) => setYear(e.target.value)}>
+            <option>-- Year --</option>
+            {years.map(y => <option key={y}>{y}</option>)}
+          </select>
+          <button type='submit'>Submit</button>
+        </form>
+      )}
+      {view === 'upload' && renderUploadTable(headersMap[section], ...dataMap[section])}
     </div>
   );
 };
