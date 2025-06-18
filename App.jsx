@@ -12,8 +12,8 @@ const App = () => {
   const [year, setYear] = useState('');
   const [invoiceData, setInvoiceData] = useState([]);
 
-  const entityOptions = [1207, 3188, 1012, 1194, 380, 519, 1209, 1310, 3124, 1180, 1467, 466, 3121, 477, 1456, 1287];
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const entityOptions = [1207, 3188, 1012, 1194, 380, 519, 1209, 1310, 3124, 1180, 1467, 466, 3121, 477, 1456, 1287, 1396, 3168, 417];
+  const months = ['January', 'February', 'March', "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const years = ['2025', '2026'];
 
   useEffect(() => {
@@ -44,85 +44,59 @@ const App = () => {
     if (!response.ok) alert(`❌ Upload failed: ${response.statusText}`);
   };
 
-  const downloadFile = async (fileName) => {
-    const token = await getAccessToken();
-    const downloadUrl = `https://graph.microsoft.com/v1.0/sites/collaboration.merck.com,7c55f2f5-011e-404b-8ab4-2e63558acce8,453db3a9-a975-4499-8e4b-2b358f883ed4/drive/root:/General/PWC Revenue Testing Automation/${fileName}:/content`;
-
-    const response = await fetch(downloadUrl, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-
-    if (response.ok) {
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.click();
-    } else {
-      alert(`❌ Download failed: ${response.statusText}`);
-    }
-  };
-
-  const handleFileUpload = (e, rowIdx, key) => {
+  const handleFileUpload = (e, idx, key) => {
     const file = e.target.files[0];
-    if (file) uploadFile(file);
+    if (file) {
+      uploadFile(file);
+      const updatedData = [...invoiceData];
+      updatedData[idx][key] = file.name;
+      setInvoiceData(updatedData);
+    }
   };
 
   const addRow = () => {
     setInvoiceData([...invoiceData, { invoice: '', cash_app: '', credit_note: '', fbl5n: '', cmm: '', comments: '' }]);
   };
 
-  const FileInputCell = ({ value, onTextChange, onFileUpload, fileName }) => {
-    const fileRef = useRef();
-    return (
-      <div style={{ position: 'relative', cursor: 'pointer' }}>
-        <input
-          type="text"
-          value={value || ''}
-          onChange={onTextChange}
-          onClick={() => fileRef.current?.click()}
-          style={{ width: '100%', padding: '4px', textAlign: 'center' }}
-        />
-        <input type="file" ref={fileRef} onChange={onFileUpload} style={{ display: 'none' }} />
-        {fileName && (
-          <button style={{ fontSize: '0.75rem' }} onClick={() => downloadFile(fileName)}>
-            📥 Download
-          </button>
-        )}
-      </div>
-    );
+  const downloadFile = async (fileName) => {
+    const token = await getAccessToken();
+    const downloadUrl = `https://graph.microsoft.com/v1.0/sites/collaboration.merck.com,7c55f2f5-011e-404b-8ab4-2e63558acce8,453db3a9-a975-4499-8e4b-2b358f883ed4/drive/root:/General/PWC Revenue Testing Automation/${fileName}:/content`;
+    const response = await fetch(downloadUrl, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      alert(`❌ Download failed: ${response.statusText}`);
+    }
   };
 
-  const headers = [
-    { key: 'invoice', label: 'Invoice' },
-    { key: 'cash_app', label: 'Cash App' },
-    { key: 'credit_note', label: 'Credit Note' },
-    { key: 'fbl5n', label: 'FBL5N' },
-    { key: 'cmm', label: 'CMM' },
-    { key: 'comments', label: 'Comments' }
-  ];
-
   return (
-    <div style={{ backgroundColor: '#EAF6FC', minHeight: '100vh', fontFamily: 'Segoe UI', padding: '3rem', boxSizing: 'border-box' }}>
-      
+    <div style={{ backgroundColor: '#EAF6FC', minHeight: '100vh', padding: '2rem', fontFamily: 'Segoe UI' }}>
       {view !== 'signin' && (
-        <img src={msdLogo} alt='MSD Logo' style={{ position: 'absolute', top: 15, right: 15, height: 35 }} />
+        <img src={msdLogo} alt='MSD Logo' style={{ position: 'absolute', top: 10, right: 20, height: 30 }} />
       )}
 
       {view === 'signin' && (
-        <div style={{ textAlign: 'center', marginTop: '5rem' }}>
-          <img src={msdLogo} alt='MSD Logo' style={{ height: 80, marginBottom: '1rem' }} />
+        <div style={{ textAlign: 'center' }}>
+          <img src={msdLogo} alt='MSD Logo' style={{ height: 100, marginBottom: 20 }} />
           <h1>PWC Testing Automation</h1>
-          <button style={{ padding: '8px 16px' }} onClick={signIn}>Sign in with Microsoft</button>
+          <button onClick={signIn}>Sign in with Microsoft</button>
         </div>
       )}
 
       {view === 'home' && (
-        <div style={{ textAlign: 'center' }}>
-          <h2 style={{ marginBottom: '2rem' }}>Select a section to continue:</h2>
+        <div>
+          <h2>Select a section to continue:</h2>
           {['cash_app', 'po_pod', 'follow_up'].map(s => (
-            <button key={s} onClick={() => { setSection(s); setView('dashboard'); }} style={{ padding: '12px 25px', margin: '0 10px', backgroundColor: '#007680', color: '#fff', borderRadius: 5 }}>
+            <button key={s} onClick={() => { setSection(s); setView('dashboard'); }}>
               {s.replace('_', ' ').toUpperCase()}
             </button>
           ))}
@@ -131,45 +105,68 @@ const App = () => {
       )}
 
       {view === 'dashboard' && (
-        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-          <select value={entity} onChange={(e) => setEntity(e.target.value)} className="dropdown-style">
-            <option>-- Select Entity --</option>
-            {entityOptions.map((v) => <option key={v}>{v}</option>)}
-          </select>
-          <select value={month} onChange={(e) => setMonth(e.target.value)} className="dropdown-style">
-            <option>-- Select Month --</option>
-            {months.map(m => <option key={m}>{m}</option>)}
-          </select>
-          <select value={year} onChange={(e) => setYear(e.target.value)} className="dropdown-style">
-            <option>-- Select Year --</option>
-            {years.map(y => <option key={y}>{y}</option>)}
-          </select>
+        <div style={{ padding: '20px', backgroundColor: '#fff', borderRadius: '8px', width: '250px', marginTop: '40px' }}>
+          <div>
+            <label>Entity</label>
+            <select value={entity} onChange={(e) => setEntity(e.target.value)} style={{ width: '100%', marginBottom: 10 }}>
+              <option>-- Select --</option>
+              {entityOptions.map((v) => <option key={v}>{v}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>Month</label>
+            <select value={month} onChange={(e) => setMonth(e.target.value)} style={{ width: '100%', marginBottom: 10 }}>
+              <option>-- Select --</option>
+              {months.map(m => <option key={m}>{m}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>Year</label>
+            <select value={year} onChange={(e) => setYear(e.target.value)} style={{ width: '100%', marginBottom: 10 }}>
+              <option>-- Select --</option>
+              {years.map(y => <option key={y}>{y}</option>)}
+            </select>
+          </div>
           <button onClick={() => setView('upload')}>Submit</button>
           <button onClick={() => setView('home')}>← Go Back</button>
         </div>
       )}
 
       {view === 'upload' && (
-        <div style={{ margin: 'auto', marginTop: '2rem', width: '95%' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '2rem' }}>
-            <thead style={{ background: '#007680', color: '#fff' }}>
-              <tr>{headers.map(h => <th key={h.key} style={{ padding: 8 }}>{h.label}</th>)}</tr>
+        <div style={{ marginTop: '50px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 20 }}>
+            <thead>
+              <tr style={{ background: '#007680', color: '#fff' }}>
+                {['Invoice', 'Cash App', 'Credit Note', 'FBL5N', 'CMM', 'Comments'].map(h => <th key={h}>{h}</th>)}
+              </tr>
             </thead>
             <tbody>
               {invoiceData.map((row, idx) => (
                 <tr key={idx}>
-                  {headers.map(h => (
-                    <td key={h.key}>
-                      <FileInputCell
-                        value={row[h.key]}
-                        onTextChange={(e) => {
+                  {Object.keys(row).map((key) => (
+                    <td key={key}>
+                      <input
+                        type='text'
+                        value={row[key]}
+                        onChange={(e) => {
                           const updated = [...invoiceData];
-                          updated[idx][h.key] = e.target.value;
+                          updated[idx][key] = e.target.value;
                           setInvoiceData(updated);
                         }}
-                        onFileUpload={(e) => handleFileUpload(e, idx, h.key)}
-                        fileName={row[h.key]}
+                        onClick={() => document.getElementById(`file-upload-${idx}-${key}`).click()}
+                        style={{ width: '100%' }}
                       />
+                      <input
+                        type='file'
+                        id={`file-upload-${idx}-${key}`}
+                        style={{ display: 'none' }}
+                        onChange={(e) => handleFileUpload(e, idx, key)}
+                      />
+                      {row[key] && (
+                        <button onClick={() => downloadFile(row[key])} style={{ marginTop: '5px' }}>
+                          Download
+                        </button>
+                      )}
                     </td>
                   ))}
                 </tr>
