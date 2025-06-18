@@ -9,12 +9,12 @@ const App = () => {
   const [entity, setEntity] = useState('');
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
-  const [invoiceData, setInvoiceData] = useState([{}]);
-  const [poPodData, setPoPodData] = useState([{}]);
-  const [followUpData, setFollowUpData] = useState([{}]);
+  const [invoiceData, setInvoiceData] = useState([]);
+  const [poPodData, setPoPodData] = useState([]);
+  const [followUpData, setFollowUpData] = useState([]);
 
-  const entityOptions = [1207,3188,1012,1194,380,519,1209,1310,3124,1180,1467,466,3121,477,1456,1287,1396,3168,417,3583,1698,1443,1662,1204,478,1029,1471,1177,1253,1580,3592,1285,3225,1101,1395,1203,1247,1083,1216,1190,3325,3143,3223,1619];
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const entityOptions = [1207, 3188, 1012, 1194, 380, 519, 1209, 1310, 3124, 1180, 1467, 466, 3121, 477, 1456, 1287, 1396, 3168, 417, 3583, 1698, 1443, 1662, 1204, 478, 1029, 1471, 1177, 1253, 1580, 3592, 1285, 3225, 1101, 1395, 1203, 1247, 1083, 1216, 1190, 3325, 3143, 3223, 1619];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const years = ['2025', '2026'];
 
   useEffect(() => {
@@ -42,19 +42,16 @@ const App = () => {
     if (!file) return;
     const accessToken = await getAccessToken();
     const uploadUrl = buildFileUrl(file.name);
-    
     try {
       const response = await fetch(uploadUrl, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': file.type },
         body: file
       });
-
       if (response.ok) {
         const updated = [...data];
         updated[rowIdx] = { ...updated[rowIdx], [key]: file.name };
         setData(updated);
-        alert("✅ Uploaded successfully!");
       } else {
         const errorText = await response.text();
         alert(`❌ Upload failed: ${response.status} - ${errorText}`);
@@ -83,33 +80,14 @@ const App = () => {
           ))}
         </tbody>
       </table>
-      <br />
-      <button onClick={() => setData([...data, {}])}>＋ Add Row</button>
-      <br /><br />
       <button onClick={() => setView('dashboard')}>← Go Back</button>
     </div>
   );
 
   const headersMap = {
-    cash_app: [
-      { key: 'invoice', label: 'Invoice' }, { key: 'cash_app', label: 'Cash App' },
-      { key: 'credit_note', label: 'Credit Note' }, { key: 'fbl5n', label: 'FBL5N' },
-      { key: 'cmm', label: 'CMM' }, { key: 'comments', label: 'Comments' }
-    ],
-    po_pod: [
-      { key: 'so', label: 'SO' }, { key: 'po', label: 'PO' }, { key: 'po_date', label: 'PO Date' },
-      { key: 'pod', label: 'POD' }, { key: 'pod_date', label: 'POD Date' }, { key: 'invoice_date', label: 'Invoice Date' },
-      { key: 'order_creator', label: 'Order Creator' }, { key: 'plant', label: 'Plant' },
-      { key: 'customer', label: 'Customer' }, { key: 'product', label: 'Product' }, { key: 'incoterms', label: 'Incoterms' }
-    ],
-    follow_up: [
-      { key: 'group', label: 'Group/Statutory' }, { key: 'country', label: 'Country' },
-      { key: 'ah_hh', label: 'AH/HH' }, { key: 'entity', label: 'Entity' },
-      { key: 'month', label: 'Month' }, { key: 'so', label: 'SO' }, { key: 'invoice', label: 'Invoice' },
-      { key: 'pod', label: 'POD' }, { key: 'po', label: 'PO' }, { key: 'order_creator', label: 'Order Creator' },
-      { key: 'plant', label: 'Plant' }, { key: 'customer', label: 'Customer' }, { key: 'product', label: 'Product' },
-      { key: 'year', label: 'Year' }, { key: 'pwc_comment', label: 'PwC Comment' }
-    ]
+    cash_app: [{ key: 'invoice', label: 'Invoice' }, { key: 'cash_app', label: 'Cash App' }, { key: 'credit_note', label: 'Credit Note' }, { key: 'fbl5n', label: 'FBL5N' }, { key: 'cmm', label: 'CMM' }, { key: 'comments', label: 'Comments' }],
+    po_pod: [{ key: 'so', label: 'SO' }, { key: 'po', label: 'PO' }, { key: 'po_date', label: 'PO Date' }, { key: 'pod', label: 'POD' }, { key: 'pod_date', label: 'POD Date' }, { key: 'invoice_date', label: 'Invoice Date' }, { key: 'order_creator', label: 'Order Creator' }, { key: 'plant', label: 'Plant' }, { key: 'customer', label: 'Customer' }, { key: 'product', label: 'Product' }, { key: 'incoterms', label: 'Incoterms' }],
+    follow_up: [{ key: 'group', label: 'Group/Statutory' }, { key: 'country', label: 'Country' }, { key: 'ah_hh', label: 'AH/HH' }, { key: 'entity', label: 'Entity' }, { key: 'month', label: 'Month' }, { key: 'so', label: 'SO' }, { key: 'invoice', label: 'Invoice' }, { key: 'pod', label: 'POD' }, { key: 'po', label: 'PO' }, { key: 'order_creator', label: 'Order Creator' }, { key: 'plant', label: 'Plant' }, { key: 'customer', label: 'Customer' }, { key: 'product', label: 'Product' }, { key: 'year', label: 'Year' }, { key: 'pwc_comment', label: 'PwC Comment' }]
   };
 
   const dataMap = {
