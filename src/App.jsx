@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMsal } from '@azure/msal-react';
 import { loginRequest } from './authConfig';
 import msdLogo from './assets/msd_logo.webp';
@@ -12,12 +12,8 @@ const App = () => {
   const [year, setYear] = useState('');
   const [invoiceData, setInvoiceData] = useState([]);
 
-  const entityOptions = [1207, 3188, 1012, 1194, 380, 519, 1209, 1310, 3124, 1180, 1467, 466, 3121, 477, 1456, 1287,
-    1396, 3168, 417, 3583, 1698, 1443, 1662, 1204, 478, 1029,
-    1471, 1177, 1253, 1580, 3592, 1285, 3225, 1101, 1395, 1203,
-    1247, 1083, 1216, 1190, 3325, 3143, 3223, 1619]; // shortened for brevity
-  const months = ['January', 'February', 'March', "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"];
+  const entityOptions = [1207, 3188, 1012, 1194, 380, 519, 1209, 1310, 3124, 1180, 1467, 466, 3121, 477, 1456, 1287];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const years = ['2025', '2026'];
 
   useEffect(() => {
@@ -45,8 +41,26 @@ const App = () => {
       body: file
     });
 
-    if (!response.ok) {
-      alert(`❌ Upload failed: ${response.statusText}`);
+    if (!response.ok) alert(`❌ Upload failed: ${response.statusText}`);
+  };
+
+  const downloadFile = async (fileName) => {
+    const token = await getAccessToken();
+    const downloadUrl = `https://graph.microsoft.com/v1.0/sites/collaboration.merck.com,7c55f2f5-011e-404b-8ab4-2e63558acce8,453db3a9-a975-4499-8e4b-2b358f883ed4/drive/root:/General/PWC Revenue Testing Automation/${fileName}:/content`;
+
+    const response = await fetch(downloadUrl, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+    } else {
+      alert(`❌ Download failed: ${response.statusText}`);
     }
   };
 
@@ -59,25 +73,56 @@ const App = () => {
     setInvoiceData([...invoiceData, { invoice: '', cash_app: '', credit_note: '', fbl5n: '', cmm: '', comments: '' }]);
   };
 
+  const FileInputCell = ({ value, onTextChange, onFileUpload, fileName }) => {
+    const fileRef = useRef();
+    return (
+      <div style={{ position: 'relative', cursor: 'pointer' }}>
+        <input
+          type="text"
+          value={value || ''}
+          onChange={onTextChange}
+          onClick={() => fileRef.current?.click()}
+          style={{ width: '100%', padding: '4px', textAlign: 'center' }}
+        />
+        <input type="file" ref={fileRef} onChange={onFileUpload} style={{ display: 'none' }} />
+        {fileName && (
+          <button style={{ fontSize: '0.75rem' }} onClick={() => downloadFile(fileName)}>
+            📥 Download
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const headers = [
+    { key: 'invoice', label: 'Invoice' },
+    { key: 'cash_app', label: 'Cash App' },
+    { key: 'credit_note', label: 'Credit Note' },
+    { key: 'fbl5n', label: 'FBL5N' },
+    { key: 'cmm', label: 'CMM' },
+    { key: 'comments', label: 'Comments' }
+  ];
+
   return (
-    <div style={{ backgroundColor: '#EAF6FC', minHeight: '100vh', padding: '2rem', fontFamily: 'Segoe UI' }}>
+    <div style={{ backgroundColor: '#EAF6FC', minHeight: '100vh', fontFamily: 'Segoe UI', padding: '3rem', boxSizing: 'border-box' }}>
+      
       {view !== 'signin' && (
-        <img src={msdLogo} alt='MSD Logo' style={{ position: 'absolute', top: 10, right: 20, height: 40 }} />
+        <img src={msdLogo} alt='MSD Logo' style={{ position: 'absolute', top: 15, right: 15, height: 35 }} />
       )}
 
       {view === 'signin' && (
-        <div style={{ textAlign: 'center' }}>
-          <img src={msdLogo} alt='MSD Logo' style={{ height: 100, marginBottom: 20 }} />
+        <div style={{ textAlign: 'center', marginTop: '5rem' }}>
+          <img src={msdLogo} alt='MSD Logo' style={{ height: 80, marginBottom: '1rem' }} />
           <h1>PWC Testing Automation</h1>
-          <button onClick={signIn}>Sign in with Microsoft</button>
+          <button style={{ padding: '8px 16px' }} onClick={signIn}>Sign in with Microsoft</button>
         </div>
       )}
 
       {view === 'home' && (
-        <div>
-          <h2>Select a section to continue:</h2>
+        <div style={{ textAlign: 'center' }}>
+          <h2 style={{ marginBottom: '2rem' }}>Select a section to continue:</h2>
           {['cash_app', 'po_pod', 'follow_up'].map(s => (
-            <button key={s} onClick={() => { setSection(s); setView('dashboard'); }}>
+            <button key={s} onClick={() => { setSection(s); setView('dashboard'); }} style={{ padding: '12px 25px', margin: '0 10px', backgroundColor: '#007680', color: '#fff', borderRadius: 5 }}>
               {s.replace('_', ' ').toUpperCase()}
             </button>
           ))}
@@ -86,16 +131,16 @@ const App = () => {
       )}
 
       {view === 'dashboard' && (
-        <div>
-          <select value={entity} onChange={(e) => setEntity(e.target.value)}>
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <select value={entity} onChange={(e) => setEntity(e.target.value)} className="dropdown-style">
             <option>-- Select Entity --</option>
             {entityOptions.map((v) => <option key={v}>{v}</option>)}
           </select>
-          <select value={month} onChange={(e) => setMonth(e.target.value)}>
+          <select value={month} onChange={(e) => setMonth(e.target.value)} className="dropdown-style">
             <option>-- Select Month --</option>
             {months.map(m => <option key={m}>{m}</option>)}
           </select>
-          <select value={year} onChange={(e) => setYear(e.target.value)}>
+          <select value={year} onChange={(e) => setYear(e.target.value)} className="dropdown-style">
             <option>-- Select Year --</option>
             {years.map(y => <option key={y}>{y}</option>)}
           </select>
@@ -105,34 +150,25 @@ const App = () => {
       )}
 
       {view === 'upload' && (
-        <div>
-          <table style={{ width: '100%', tableLayout: 'fixed' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#007680', color: 'white' }}>
-                {['Invoice', 'Cash App', 'Credit Note', 'FBL5N', 'CMM', 'Comments'].map(h => <th key={h}>{h}</th>)}
-              </tr>
+        <div style={{ margin: 'auto', marginTop: '2rem', width: '95%' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '2rem' }}>
+            <thead style={{ background: '#007680', color: '#fff' }}>
+              <tr>{headers.map(h => <th key={h.key} style={{ padding: 8 }}>{h.label}</th>)}</tr>
             </thead>
             <tbody>
               {invoiceData.map((row, idx) => (
                 <tr key={idx}>
-                  {Object.keys(row).map((key) => (
-                    <td key={key}>
-                      <input
-                        style={{ width: '90%' }}
-                        type='text'
-                        value={row[key]}
-                        onChange={(e) => {
+                  {headers.map(h => (
+                    <td key={h.key}>
+                      <FileInputCell
+                        value={row[h.key]}
+                        onTextChange={(e) => {
                           const updated = [...invoiceData];
-                          updated[idx][key] = e.target.value;
+                          updated[idx][h.key] = e.target.value;
                           setInvoiceData(updated);
                         }}
-                        onClick={() => document.getElementById(`file-upload-${idx}-${key}`).click()}
-                      />
-                      <input
-                        type='file'
-                        id={`file-upload-${idx}-${key}`}
-                        style={{ display: 'none' }}
-                        onChange={(e) => handleFileUpload(e, idx, key)}
+                        onFileUpload={(e) => handleFileUpload(e, idx, h.key)}
+                        fileName={row[h.key]}
                       />
                     </td>
                   ))}
