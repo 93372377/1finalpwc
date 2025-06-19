@@ -11,8 +11,12 @@ const App = () => {
   const [year, setYear] = useState('');
   const [invoiceData, setInvoiceData] = useState([]);
 
-  const entityOptions = [1207, 3188, 1012, 1194, 380, 519];
-  const months = ['January', 'February', 'March', 'April', 'May', 'June'];
+  const entityOptions = [1207, 3188, 1012, 1194, 380, 519, 1209, 1310, 3124, 1180, 1467, 466, 3121, 477, 1456, 1287,
+    1396, 3168, 417, 3583, 1698, 1443, 1662, 1204, 478, 1029,
+    1471, 1177, 1253, 1580, 3592, 1285, 3225, 1101, 1395, 1203,
+    1247, 1083, 1216, 1190, 3325, 3143, 3223, 1619];
+  const months = ['January', 'February', 'March', "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
   const years = ['2025', '2026'];
 
   useEffect(() => {
